@@ -4,134 +4,120 @@ const slug = require('slug');
 const fs = require('fs')
 
 async function getProd(url) {
-    const browser = await puppeteer.launch({ headless: true });
+    const browser = await puppeteer.launch({ headless: false });
     const page = await browser.newPage();
     await page.setDefaultNavigationTimeout(0);
     await page.setViewport({ width: 1200, height: 720 })
 
     /** to disable images css and fonts to load */
-    await page.setRequestInterception(true);
-    page.on('request', (req) => {
-        if (req.resourceType() == 'stylesheet' || req.resourceType() == 'font') {
-            req.abort();
-        }
-        else {
-            req.continue();
-        }
-    });
+    // await page.setRequestInterception(true);
+    // page.on('request', (req) => {
+    //     if (req.resourceType() == 'stylesheet' || req.resourceType() == 'font') {
+    //         req.abort();
+    //     }
+    //     else {
+    //         req.continue();
+    //     }
+    // });
 
-    await page.waitFor(8000);
+    // await page.waitFor(3000);
 
     await page.goto(url, { waitUntil: 'networkidle0' });
-    let record = {};
     try {
-        try {
-            const package_content = await page.$eval('div.box-content > div', e => e.innerText);
-            record.package_content = package_content;
-        } catch (err) {
-            record.package_content = '';
-        }
-        try {
-            const img = await page.$eval('#module_item_gallery_1 > div > div.gallery-preview-panel > div > img', e => e.src);
-            record.image = img;
-        } catch (err) {
-            record.image = '';
-        }
-        try {
-            const thumbs = await page.evaluate(() => {
-                let images = [];
-                const length = document.querySelectorAll('.item-gallery__image-wrapper').length
-                for (var i = 0; i < length; i++) {
-                    images.push(document.querySelectorAll('.item-gallery__image-wrapper > img')[i].src);
-                }
-                return images;
-            })
-            record.thumbnails = thumbs;
-        } catch (err) {
-            record.thumbnails = '';
-        }
-        try {
-            const title = await page.$eval('#module_product_title_1 > div > div > span', e => e.innerText);
-            record.title = title;
-            record.slug = slug(title, {
-                lower: true
-            });
-        } catch (err) {
-            record.title = '';
-            record.slug = '';
+        const package_content = await page.$eval('div.box-content > div', e => e.innerText);
+        const img = await page.$eval('#module_item_gallery_1 > div > div.gallery-preview-panel > div > img', e => e.src);
 
-        }
-        try {
-            const price = await page.$eval('#module_product_price_1 > div > div > span', e => e.innerText);
-            record.price = price;
-        } catch (err) {
-            record.price = '';
-        }
 
-        try {
-            const cutting_price = await page.$eval('#module_product_price_1 > div > div > div > span.pdp-price.pdp-price_type_deleted.pdp-price_color_lightgray.pdp-price_size_xs', e => e.innerText);
-            record.cutting_price = cutting_price;
-        } catch (error) {
-            record.cutting_price = '';
-        }
-        try {
-            const dscrp = [];
-            for (var i = 0; i < des.length; i++) {
-                const s = await des[i].getProperty('innerText');
-                let para = s._remoteObject.value.replace('\n + ', ' ');
-
-                dscrp.push(para);
+        const thumbs = await page.evaluate(() => {
+            let images = [];
+            const length = document.querySelectorAll('.item-gallery__image-wrapper').length
+            for (var i = 0; i < length; i++) {
+                images.push(document.querySelectorAll('.item-gallery__image-wrapper > img')[i].src);
             }
-        } catch (error) {
-            record.description = '';
-        }
+            return images;
+        })
 
+        const title = await page.$eval('#module_product_title_1 > div > div > span', e => e.innerText);
+        const price = await page.$eval('#module_product_price_1 > div > div > span', e => e.innerText);
+        const cutting_price = await page.$eval('#module_product_price_1 > div > div > div > span.pdp-price.pdp-price_type_deleted.pdp-price_color_lightgray.pdp-price_size_xs', e => e.innerText);
+        const des = await page.$$('#module_product_detail > div > div > div.html-content.detail-content');
+        const dscrp = [];
+        for (var i = 0; i < des.length; i++) {
+            const s = await des[i].getProperty('innerText');
+            let para = s._remoteObject.value.replace('\n + ', ' ');
+
+            dscrp.push(para);
+        }
+        let record = {};
+        record.thumbnails = thumbs;
+        record.cutting_price = cutting_price;
+        record.description = dscrp;
+        record.image = img;
+        record.price = price;
+        record.package_content = package_content;
+        record.slug = slug(title, {
+            lower: true
+        });
+        record.title = title;
         const elements = await page.$$('.key-li');
         for (var i = 0; i < elements.length; i++) {
             const s = await elements[i].getProperty('innerText');
+
 
             let p = s._remoteObject.value;
             if (p.includes('Brand')) {
                 record.brand = p.split('Brand')[1].trim()
             }
+            if (p.includes('Model')) {
+                record.model = p.split('Model')[1].trim()
+            }
             if (p.includes('SKU')) {
                 record.SellerSku = p.split('SKU')[1].trim()
             }
-            if (p.includes('Air Conditioner Rated Capacity')) {
-                record.capacity = p.split('Air Conditioner Rated Capacity (BTUs)')[1].trim()
+            if (p.includes('Electronics Features')) {
+                record.electronics_features = p.split('Electronics Features')[1].trim()
             }
-            if (p.includes('Kit')) {
-                record.kit_included = p.split('Kit Included')[1].trim()
+            if (p.includes('Energy Rating')) {
+                record.energy_rating = p.split('Energy Rating')[1].trim()
             }
-            if (p.includes('Inverter')) {
-                record.inverter = p.split('Inverter')[1].trim()
+            if (p.includes('Required Serial')) {
+                record.required_serial = p.split('Required Serial')[1].trim()
             }
-            if (p.includes('Connecting Wire')) {
-                record.connecting_wire = p.split('Connecting Wire')[1].trim()
+            if (p.includes('Speakers Config')) {
+                record.speakers_config = p.split('Speakers Config')[1].trim()
             }
-            if (p.includes('Model')) {
-                record.model = p.split('Model')[1].trim()
+            if (p.includes('Refresh Rate')) {
+                record.refresh_rate = p.split('Refresh Rate')[1].trim()
+            }
+            if (p.includes('Display Resolution')) {
+                record.display_resolution = p.split('Display Resolution')[1].trim()
+            }
+            if (p.includes('Curved TV')) {
+                record.curved_tv = p.split('Curved TV')[1].trim()
+            }
+            if (p.includes('TV Technology')) {
+                record.tv_technology = p.split('TV Technology')[1].trim()
+            }
+            if (p.includes('Number of USB ports')) {
+                record.usb_ports = p.split('Number of USB ports')[1].trim()
+            }
+            if (p.includes('TvResolution')) {
+                record.tv_resolution = p.split('TvResolution')[1].trim()
             }
             if (p.includes('Warranty Policy')) {
                 record.product_warranty = p.split('Warranty Policy')[1].trim()
             }
-            if (p.includes('Air Conditioner Features')) {
-                record.air_conditioner_features = p.split('Air Conditioner Features')[1].trim()
+            if (p.includes('Number of HDMI Ports')) {
+                record.number_of_hdmi_ports = p.split('Number of HDMI Ports')[1].trim()
             }
-            if (p.includes('Type Air Conditioner')) {
-                record.type_air_conditioner = p.split('Type Air Conditioner')[1].trim()
+            if (p.includes('Smart TV')) {
+                record.smart_tv = p.split('Smart TV')[1].trim()
             }
-            if (p.includes('Home Features')) {
-                record.home_features = p.split('Home Features')[1].trim()
+            if (p.includes('Display Size (inches)')) {
+                record.display_size_tv = p.split('Display Size (inches)')[1].trim()
             }
-            if (p.includes('Horsepower')) {
-                record.horse_power = p.split('Horsepower')[1].trim()
-            }
-            if (p.includes('Room Size')) {
-                record.room_size = p.split('Room Size')[1].trim()
-            }
-            if (p.includes('Power Consumption')) {
-                record.power_consumption = p.split('Power Consumption')[1].trim()
+            if (p.includes('Cinema 3D')) {
+                record.cinema_3d = p.split('Cinema 3D')[1].trim()
             }
             if (p.includes('Color Family')) {
                 record.color_family = p.split('Color Family')[1].trim()
@@ -148,9 +134,6 @@ async function getProd(url) {
             if (p.includes('English description')) {
                 record.description_en = p.split('English description')[1].trim()
             }
-            if (p.includes('Imported')) {
-                record.imported = p.split('Imported')[1].trim()
-            }
             if (p.includes('Warranty Period')) {
                 record.warranty_period = p.split('Warranty Period EN')[1].trim()
             }
@@ -159,6 +142,9 @@ async function getProd(url) {
             }
             if (p.includes('Quantity')) {
                 record.quantity = p.split('Quantity')[1].trim()
+            }
+            if (p.includes('Color thumbnail')) {
+                record.color_thumbnail = p.split('Color thumbnail')[1].trim()
             }
             if (p.includes('Price')) {
                 record.price = p.split('Price')[1].trim()
@@ -200,7 +186,8 @@ async function getProd(url) {
                 record.express_delivery = p.split('Express delivery')[1].trim()
             }
         }
-        await browser.close();
+
+        // await browser.close();
         return record;
     } catch (error) {
         throw error
@@ -280,7 +267,7 @@ async function main() {
 
 
 
-    fs.readFile('acUrls1.json', async (err, data) => {
+    fs.readFile('test.json', async (err, data) => {
         if (err) throw err;
         let srcs = JSON.parse(data);
 
@@ -302,24 +289,23 @@ async function main() {
                     console.log("into else++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
                     const record = {
                         slug: prodData.slug,
+                        cutting_price: prodData.cutting_price,
+                        thumbnails: prodData.thumbnails,
                         title: prodData.title,
                         image: prodData.image,
-                        thumbnails: prodData.thumbnails,
-                        cutting_price: prodData.cutting_price,
                         price: prodData.price,
                         sku: prodData.SellerSku,
-                        capacity: prodData.capacity || 'N/A',
                         description: prodData.description || 'N/A',
                         brand: prodData.brand,
                         box: prodData.package_content || 'N/A',
-                        connecting_wire: prodData.connecting_wire || 'N/A',
-                        kit_included: prodData.kit_included || 'N/A',
+                        electronics_features: prodData.electronics_features || 'N/A',
+                        energy_rating: prodData.energy_rating || 'N/A',
                         warranty_period: prodData.warranty_period || 'N/A',
-                        inverter: prodData.inverter || 'N/A',
-                        home_features: prodData.home_features || 'N/A',
-                        horse_power: prodData.horse_power || 'N/A',
-                        room_size: prodData.room_size || 'N/A',
-                        power_consumption: prodData.power_consumption || 'N/A',
+                        required_serial: prodData.required_serial || 'N/A',
+                        speakers_config: prodData.speakers_config || 'N/A',
+                        refresh_rate: prodData.refresh_rate || 'N/A',
+                        display_resolution: prodData.display_resolution || 'N/A',
+                        tv_technology: prodData.tv_technology || 'N/A',
                         model: prodData.model || 'N/A',
                         warranty_type: prodData.warranty_type || 'N/A',
                         product_warranty: prodData.product_warranty || 'N/A',
@@ -327,7 +313,7 @@ async function main() {
                         short_description_en: prodData.short_description_en || 'N/A',
                         name_en: prodData.name_en || 'N/A',
                         description_en: prodData.description_en || 'N/A',
-                        imported: prodData.imported || 'N/A',
+                        curved_tv: prodData.curved_tv || 'N/A',
                         product_warranty_en: prodData.product_warranty_en || 'N/A',
                         quantity: prodData.quantity || 'N/A',
                         delivery_option_economy: prodData.delivery_option_economy || 'N/A',
@@ -341,14 +327,21 @@ async function main() {
                         package_height: prodData.package_height || 'N/A',
                         tax_class: prodData.tax_class || 'N/A',
                         hazmat: prodData.Hazmat || 'N/A',
-                        express_delivery: prodData.express_delivery || 'N/A'
+                        express_delivery: prodData.express_delivery || 'N/A',
+                        usb_ports: prodData.usb_ports || 'N/A',
+                        tv_resolution: prodData.tv_resolution || 'N/A',
+                        number_of_hdmi_ports: prodData.number_of_hdmi_ports || 'N/A',
+                        smart_tv: prodData.smart_tv || 'N/A',
+                        display_size_tv: prodData.display_size_tv || 'N/A',
+                        cinema_3d: prodData.cinema_3d || 'N/A'
                     };
+
                     count = count + 1;
                     console.log(`recordddddd--------------------------------------------------------------------------${count}`, record);
 
                     records.push(record);
                     let data = JSON.stringify(records, null, 2);
-                    fs.writeFileSync('acFinal.json', data, err => {
+                    fs.writeFileSync('ledData.json', data, err => {
                         if (err) {
                             console.log("Error")
                         } else {
