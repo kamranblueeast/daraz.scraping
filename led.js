@@ -4,7 +4,7 @@ const slug = require('slug');
 const fs = require('fs')
 
 async function getProd(url) {
-    const browser = await puppeteer.launch({ headless: false });
+    const browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
     await page.setDefaultNavigationTimeout(0);
     await page.setViewport({ width: 1200, height: 720 })
@@ -23,42 +23,74 @@ async function getProd(url) {
     // await page.waitFor(3000);
 
     await page.goto(url, { waitUntil: 'networkidle0' });
+    let record = {};
     try {
-        const package_content = await page.$eval('div.box-content > div', e => e.innerText);
-        const img = await page.$eval('#module_item_gallery_1 > div > div.gallery-preview-panel > div > img', e => e.src);
-
-
-        const thumbs = await page.evaluate(() => {
-            let images = [];
-            const length = document.querySelectorAll('.item-gallery__image-wrapper').length
-            for (var i = 0; i < length; i++) {
-                images.push(document.querySelectorAll('.item-gallery__image-wrapper > img')[i].src);
-            }
-            return images;
-        })
-
-        const title = await page.$eval('#module_product_title_1 > div > div > span', e => e.innerText);
-        const price = await page.$eval('#module_product_price_1 > div > div > span', e => e.innerText);
-        const cutting_price = await page.$eval('#module_product_price_1 > div > div > div > span.pdp-price.pdp-price_type_deleted.pdp-price_color_lightgray.pdp-price_size_xs', e => e.innerText);
-        const des = await page.$$('#module_product_detail > div > div > div.html-content.detail-content');
-        const dscrp = [];
-        for (var i = 0; i < des.length; i++) {
-            const s = await des[i].getProperty('innerText');
-            let para = s._remoteObject.value.replace('\n + ', ' ');
-
-            dscrp.push(para);
+        try {
+            const package_content = await page.$eval('div.box-content > div', e => e.innerText);
+            record.package_content = package_content;
+        } catch (err) {
+            record.package_content = '';
         }
-        let record = {};
-        record.thumbnails = thumbs;
-        record.cutting_price = cutting_price;
-        record.description = dscrp;
-        record.image = img;
-        record.price = price;
-        record.package_content = package_content;
-        record.slug = slug(title, {
-            lower: true
-        });
-        record.title = title;
+        try {
+            const img = await page.$eval('#module_item_gallery_1 > div > div.gallery-preview-panel > div > img', e => e.src);
+            record.image = img;
+        } catch (err) {
+            record.image = '';
+        }
+
+
+        try {
+            const thumbs = await page.evaluate(() => {
+                let images = [];
+                const length = document.querySelectorAll('.item-gallery__image-wrapper').length
+                for (var i = 0; i < length; i++) {
+                    images.push(document.querySelectorAll('.item-gallery__image-wrapper > img')[i].src);
+                }
+                return images;
+            })
+            record.thumbnails = thumbs;
+        } catch (err) {
+            record.thumbnails = '';
+        }
+
+        try {
+            const title = await page.$eval('#module_product_title_1 > div > div > span', e => e.innerText);
+            record.title = title;
+            record.slug = slug(title, {
+                lower: true
+            });
+        } catch (err) {
+            record.title = '';
+            record.slug = '';
+
+        }
+        try {
+            const price = await page.$eval('#module_product_price_1 > div > div > span', e => e.innerText);
+            record.price = price;
+        } catch (err) {
+            record.price = '';
+        }
+        try {
+            const cutting_price = await page.$eval('#module_product_price_1 > div > div > div > span.pdp-price.pdp-price_type_deleted.pdp-price_color_lightgray.pdp-price_size_xs', e => e.innerText);
+            record.cutting_price = cutting_price;
+        } catch (error) {
+            record.cutting_price = '';
+        }
+        try {
+            const des = await page.$$('#module_product_detail > div > div > div.html-content.detail-content');
+            const dscrp = [];
+            for (var i = 0; i < des.length; i++) {
+                const s = await des[i].getProperty('innerText');
+                let para = s._remoteObject.value.replace('\n + ', ' ');
+
+                dscrp.push(para);
+                record.description = dscrp;
+            }
+            record.description = dscrp;
+
+        } catch (error) {
+            record.description = '';
+        }
         const elements = await page.$$('.key-li');
         for (var i = 0; i < elements.length; i++) {
             const s = await elements[i].getProperty('innerText');
@@ -187,7 +219,7 @@ async function getProd(url) {
             }
         }
 
-        // await browser.close();
+        await browser.close();
         return record;
     } catch (error) {
         throw error
@@ -267,7 +299,7 @@ async function main() {
 
 
 
-    fs.readFile('test.json', async (err, data) => {
+    fs.readFile('ledUrls.json', async (err, data) => {
         if (err) throw err;
         let srcs = JSON.parse(data);
 
@@ -341,7 +373,7 @@ async function main() {
 
                     records.push(record);
                     let data = JSON.stringify(records, null, 2);
-                    fs.writeFileSync('ledData.json', data, err => {
+                    fs.writeFileSync('ledDataFinal1.json', data, err => {
                         if (err) {
                             console.log("Error")
                         } else {

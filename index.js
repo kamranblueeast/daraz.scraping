@@ -75,6 +75,7 @@ async function getProd(url) {
             record.cutting_price = '';
         }
         try {
+            const des = await page.$$('#module_product_detail > div > div > div.html-content.detail-content');
             const dscrp = [];
             for (var i = 0; i < des.length; i++) {
                 const s = await des[i].getProperty('innerText');
@@ -82,6 +83,7 @@ async function getProd(url) {
 
                 dscrp.push(para);
             }
+            record.description = dscrp;
         } catch (error) {
             record.description = '';
         }
@@ -348,7 +350,7 @@ async function main() {
 
                     records.push(record);
                     let data = JSON.stringify(records, null, 2);
-                    fs.writeFileSync('acFinal.json', data, err => {
+                    fs.writeFileSync('acFinal1.json', data, err => {
                         if (err) {
                             console.log("Error")
                         } else {
