@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 
-fs.readFile('ledDataFinal.json', async (err, data) => {
+fs.readFile('smartTvDataFinal.json', async (err, data) => {
     if (err) throw err;
     let items = JSON.parse(data);
 
@@ -9,13 +9,13 @@ fs.readFile('ledDataFinal.json', async (err, data) => {
         const newData = [];
 
         const format = item.thumbnails.toString();
-        const some = format.replace(',', '\n')
+        const some = format.replace(/,/g, '\n');
         item.thumbnails = some
         console.log("iteeem", item);
 
         newData.push(item);
         let dump = JSON.stringify(newData, null, 2);
-        fs.appendFileSync('converted.json', dump)
+        fs.appendFileSync('formatedSmartTvData.json', dump)
 
     };
 

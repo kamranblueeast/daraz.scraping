@@ -41,8 +41,11 @@ app.get("/scraper", async (req, res) => {
             const length = document.querySelectorAll('.title.clamped').length
             for (var i = 0; i < length; i++) {
                 urls.push(document.querySelectorAll('.title.clamped > a')[i].href);
+
+
             }
             let data = JSON.stringify(urls, null, 2);
+            console.log("urlssss", data);
             fs.writeFileSync('public/snip.json', data, err => {
                 if (err) {
                     console.log("Error")

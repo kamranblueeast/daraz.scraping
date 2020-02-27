@@ -299,7 +299,7 @@ async function main() {
 
 
 
-    fs.readFile('ledUrls.json', async (err, data) => {
+    fs.readFile('smartTvUrls.json', async (err, data) => {
         if (err) throw err;
         let srcs = JSON.parse(data);
 
@@ -373,7 +373,7 @@ async function main() {
 
                     records.push(record);
                     let data = JSON.stringify(records, null, 2);
-                    fs.writeFileSync('ledDataFinal1.json', data, err => {
+                    fs.writeFileSync('smartTvDataFinal.json', data, err => {
                         if (err) {
                             console.log("Error")
                         } else {

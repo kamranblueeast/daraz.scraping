@@ -21,7 +21,7 @@ async function main() {
     });
     await page.waitFor(2000);
     for (let i = 1; i <= 90; i++) {
-        await page.goto(`https://www.daraz.pk/air-conditioners/?page=${i}&spm=a2a0e.searchlistcategory.cate_3_6.2.103c5664317Oas`, { waitUntil: 'networkidle0' });
+        await page.goto(`https://www.daraz.pk/smart-tvs/?page=${i}&spm=a2a0e.home.cate_3_1.3.35e34937et3rK5`, { waitUntil: 'networkidle0' });
         let srcs = await page.$$eval(".c2prKC", elements => {
             return elements.map(el => {
 
@@ -62,7 +62,7 @@ async function main() {
 
                 urls.push(formate);
                 const data = JSON.stringify(urls)
-                fs.writeFileSync('acUrls1.json', data);
+                fs.writeFileSync('smartTVUrls.json', data);
             }
         });
 
