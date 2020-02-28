@@ -2,7 +2,8 @@ const puppeteer = require('puppeteer');
 const express = require('express');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const slug = require('slug');
-const fs = require('fs')
+const fs = require('fs');
+const bodyParser = require('body-parser');
 const app = express();
 
 const port = process.env.PORT || 9000;
