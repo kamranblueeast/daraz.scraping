@@ -16,6 +16,9 @@ const expressServer = app.listen(port, async () => {
     console.log(`Bot listening at => ${address}:${port}`);
 });
 app.get("/", async (req, res) => {
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/html');
+    res.end('<h1>Hello World</h1>');
     let urls = [];
     console.log("into get")
     for (i = 1; i <= 50; i++) {
@@ -65,6 +68,7 @@ app.get("/", async (req, res) => {
         // console.log("urlssss", data);
         fs.appendFileSync('snip1.json', data)
     }
+
 
 }
 );
