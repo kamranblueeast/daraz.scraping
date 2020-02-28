@@ -14,7 +14,7 @@ const expressServer = app.listen(port, async () => {
 
     console.log(`Bot listening at => ${address}:${port}`);
 });
-app.get("/scraper", async (req, res) => {
+app.get("/", async (req, res) => {
     let urls = [];
     console.log("into get")
     for (i = 1; i <= 50; i++) {
